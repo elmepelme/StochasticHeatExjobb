@@ -16,3 +16,10 @@ Solutions to (1) are almost 1/4 Hölder-continuous in time and almost 1/2 Hölde
 they therefore have nontrivial quadratic- and quartic variations in time and space respectively.
 The \Theta schemes don't always give correct limiting values.
 This is interesting when we want to look at inference tools for the drift param. \alpha in (1)
+
+See:
+Chong, Y., Walsh, J.B. The Roughness and Smoothness of Numerical Solutions to the Stochastic Heat Equation. Potential Anal 37, 303–332 (2012). https://doi.org/10.1007/s11118-011-9257-6 https://personal.math.ubc.ca/~walsh/yuxiang.pdf
+Estimation of the drift parameter for the fractional stochastic heat equation via power variation
+Zeina Mahdi Khalil, Ciprian Tudor https://www.arxiv.org/abs/1912.07917
+
+Etc.
