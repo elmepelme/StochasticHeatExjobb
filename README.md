@@ -15,4 +15,4 @@ This rep. is some simulations of the eq. on [a,b], studying the behaviour of fin
 Solutions to (1) are almost 1/4 Hölder-continuous in time and almost 1/2 Hölder-cont in space and 
 they therefore have nontrivial quadratic- and quartic variations in time and space respectively.
 The \Theta schemes don't always give correct limiting values.
-This is interesting when we want to look at inference tools for the drift param. \alpha in (*)
+This is interesting when we want to look at inference tools for the drift param. \alpha in (1)
