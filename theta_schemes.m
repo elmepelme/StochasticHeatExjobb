@@ -2,15 +2,15 @@
 % u_t - alpha * u_xx = \dot{W}, x \in [x_l,x_r], t > 0
 % u(0,t) = u(1,t) = 0
 clc
-alpha = exp(1)*pi^2;
+alpha = 1;
 
 M = 1000; % Number of time points. Including t = 0
 N = 999; % Inner space points. N + 2 with boundary 
-x_l = -2*sin(2);
-x_r = pi+exp(1);
+x_l = 0;
+x_r = 1;
 dx = (x_r-x_l)/(N + 1);
 
-Thetas = [0.5];
+Thetas = [0.25, 0.5, 1];
 
 U = zeros(N + 2,M, length(Thetas));
 c = 1/(pi - 2); %  c = alpha * dt / dx^2 = 1/(pi -2) by the paper
@@ -18,10 +18,12 @@ dt = dx^2 * c / alpha;
 T = M * dt; % Stopping time is not decided by us, still sol. is self similar
 
 x_points = linspace(x_l, x_r, N + 2);
-u0 = @(x) x.*(1-x)/2;
+%u0 = @(x) 10*x.*(1-x)/2;
+%u0 = @(x) 0.1*sin(2*pi*x/(x_r-x_l));
 %U(:, 1) = u0(x_points);
-
+%randoms = load('randoms.mat');
 W = sqrt(dt*dx)*normrnd(zeros(N, M), 1);
+%W = sqrt(dt*dx)*randoms;
 BC = zeros(N, M);
 BC(1, :) = U(1, :, 1);
 BC(end, :) = U(end, :, 1);
@@ -51,7 +53,6 @@ for m = 1:M-1
 end
 end
 %%
-
 sum = 0;
 for l = 1:length(Thetas)
 u_time = U(round(N/2), :, l);
@@ -68,7 +69,7 @@ end
 quadratic_variation(l) = sum;
 end
 
-%% 
+
 q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
 q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th / sqrt(1+4.*c.*th)).^2;
 real_quadratic_01 = q2(c, Thetas);
@@ -76,7 +77,7 @@ real_quadratic_min = q2(c, Thetas)*(x_r-x_l)/alpha;
 real_quartic = q4(c, Thetas, T);
 real_quartic_min = q4(c, Thetas, T)/(alpha);
 
-%%
+
 quadratic_variation
 real_quadratic_min
 quartic_variation 
@@ -101,10 +102,17 @@ h = surf(time_points, x_points, U)
 set(h,'LineStyle','none')
 
 figure
-plot(time_points, u_time);
+plot(time_points, U(round(N/2), :));
+xlabel('Time')
+title('t \mapsto u(x,t)','FontSize', 16)
+
+figure
+plot(x_points, U(:,M/2))
+xlabel('Space')
+title('x \mapsto u(x,t)','FontSize', 16)
 %% 
 close all
-x_point = round(N/2);
+x_point = round(N/2);plot
 figure
 axes = zeros(1, length(Thetas))
 for i = 1:length(Thetas)

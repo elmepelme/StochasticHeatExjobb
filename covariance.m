@@ -1,19 +1,24 @@
-clear all
-clc
+
 C_u =  @(x,t,y,s) (1/sqrt(2*pi))* (sqrt(t + s)*exp((-abs(x-y)^2)/(2*(t+s))) ...
 - sqrt(abs(t - s))*exp(-(abs(x-y)^2)/(2*abs(t-s)))) ...
 + (x-y)*(cdf('Normal', (x-y)/sqrt(s+t), 0, 1) - cdf('Normal', (x-y)/sqrt(abs(t-s)), 0, 1));
 C_u_var = @(x,t,y,s) 1/sqrt(2*pi) * sqrt(t + s);
 C_u_nan = @(x,t,y,s) (1/sqrt(2*pi)) * sqrt(t + s)*exp((-abs(x-y)^2)/(2*(t+s)));
 
+t = 1;
+s = 1;
+
+C
 %
 %       b * * * b m = 3 = M
 %       b * * * b m = 2
 %       b * * * b m = 1
 %   n = 0 1 2 3 4 
 %              (4 = N + 1)
-N = 3;
-M = 3;
+
+%% 
+N = 100;
+M = 100;
 a = 0;
 b = 1;
 T = 1;
@@ -29,7 +34,9 @@ M = length(t_points);
 cov_matrix = zeros(N, M, N, M);
 
 for i = 1:N
+    i
     for j = 1:M
+        j
         for k = 1:N
             for l = 1:M
                 kov = C_u(x_points(i), t_points(j), x_points(k), t_points(l));
@@ -44,6 +51,10 @@ for i = 1:N
 end
 
 cov_matrix_2D = reshape(cov_matrix, [N*M, N*M]);
+%%
+
+
+z = normrnd(0,1,N*M);
 
 disp('Covariance Matrix:')
 disp(cov_matrix_2D)
