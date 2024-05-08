@@ -1,47 +1,45 @@
-%% Distribution in space
-clc
-% t1 = t2
-R_White_x = @(t, x1, x2) sqrt(t/(2*pi)) * exp((-(x1-x2)^2) / (8*t))+ ...
-    ((x1-x2)/4)*( erf( (x1-x2)/(2*sqrt(2*t)) ) - 1);
-N = 1000;
-x_points = linspace(0, 1, N);
-R_x_matrix = zeros(N,N);
+%% Inference SHE drift and diffussion
 
+ 
+% Covariance Functions for u with drift = 1, diffusion = 1
+r_x = @(t, x1, x2) sqrt(t/(2*pi)) * exp((-(x1-x2)^2) / (8*t))+ ...
+    ((x1-x2)/4)*erf((x1-x2)/(2*sqrt(2*t))) - abs(x1-x2)/4;
 t = 1;
+
+r_t = @(t1,t2) 1/sqrt(4*pi) * (sqrt(t1 + t2) - sqrt(abs(t1 - t2)));
+
+N = 3000;
+points = linspace(0,1, N);
+
+% Covariance matrices
+C_x = zeros(N,N);
+C_t = zeros(N,N);
+
 for i = 1:N
     for j = 1:N
-        R_x_matrix(i,j) = R_White_x(1, x_points(i), x_points(j));
+        C_x(i,j) = r_x(t, points(i), points(j));
+        C_t(i,j) = r_t(points(i), points(j));
     end
 end
-R_x = chol(R_x_matrix);
+C_t = C_t(2:end, 2:end); % Remove zeros
 
-z = normrnd(zeros(N,1),1);
-u_x = R_x * z;
-sum = 0;
-for i = 2:N
-    sum = sum + (u_x(i) - u_x(i-1))^2;
-end
-sum
-%% Distribution in time
-N = 1000;
-t_points = linspace(0, 5, N);
-R_White_t = @(t1,t2) 1/sqrt(4*pi) * (sqrt(t1 + t2) - sqrt(abs(t1 - t2)));
-R_t_matrix = zeros(N-1,N-1);
+R_x = chol(C_x);
+R_t = chol(C_t);
 
-
-
-for i = 2:N
-    for j = 2:N
-        R_t_matrix(i-1,j-1) = R_White_t(t_points(i), t_points(j));
-    end
-end
-R_t = chol(R_t_matrix);
-z = normrnd(zeros(N-1,1),1);
-u_t = R_t * z;
-sum = 0;
-for i = 2:N-1
-    sum = sum + (u_t(i) - u_t(i-1))^4;
-end
-sum
 %%
-plot(t_points(2:end), u_t)
+K = 1000;
+U_x = zeros(N, K);
+U_t = zeros(N - 1, K);
+for k = 1:K
+    z = normrnd(zeros(N,1),1);
+    U_x(:, k) = R_x * z;
+    U_t(:, k) = R_t * z(2:end);
+end
+U_x = U_x(2:end, :); % första värdet är konstigt
+
+%%
+two_variations = sum(diff(U_x).^2);
+four_variations = sum(diff(U_t).^4);
+
+mean(two_variations)
+mean(four_variations)
