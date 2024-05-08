@@ -1,7 +1,5 @@
 %% Inference SHE drift and diffussion
-
- 
-% Covariance Functions for u with drift = 1, diffusion = 1
+ % Covariance Functions for u with drift = 1, diffusion = 1
 r_x = @(t, x1, x2) sqrt(t/(2*pi)) * exp((-(x1-x2)^2) / (8*t))+ ...
     ((x1-x2)/4)*erf((x1-x2)/(2*sqrt(2*t))) - abs(x1-x2)/4;
 t = 1;
@@ -43,3 +41,23 @@ four_variations = sum(diff(U_t).^4);
 
 mean(two_variations)
 mean(four_variations)
+
+%% 
+close all
+u_x = U_x(:, randi(K));
+u_t = U_t(:, randi(K));
+points = linspace(0,1, N);
+points = points(2:end);
+
+figure;
+subplot(2, 1, 1);
+plot(points, u_t);
+xlabel('Time')
+title('$t \mapsto u(t,x)$','FontSize', 16, 'interpreter','latex')
+
+subplot(2, 1, 2);
+plot(points, u_x);
+xlabel('Space')
+title('$x \mapsto u(t,x)$','FontSize', 16, 'interpreter','latex')
+
+sgtitle('$u(t,x)$ for $\alpha = \sigma = 1$', 'FontSize', 20, 'interpreter','latex');
