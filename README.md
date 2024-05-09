@@ -2,21 +2,15 @@
 
 The stochastic heat eq. we are considering is the formal eq. (1)
 
-u_t - \alpha * u_xx = \dot{F}      
+u_t - \alpha * u_xx = \sigma * \dot{W}      
 u(x,0) = u_0                                        
 u(t,a) = u(t,b) = 0 // boundary if on x \in [a,b]
 
 t > 0, x \in \mathbb{R} or x \in [a,b]
-\dot{F} is some noise process, either space-time white, or white in time and homog. coloured in space
-E(W(t,A)W(s,B)) = t \land s * \lambda(A \cap B) , t,s time, A,B measurable subsets in space
-E(F(t,A)F(s,B)) = t \land s * \int_A \int_B f(x-y)dxdy where f is Fourier transform of tempered measure
 
-This rep. is some simulations of the eq. on [a,b], studying the behaviour of finite-difference \Theta schemes 
-Solutions to (1) are almost 1/4 Hölder-continuous in time and almost 1/2 Hölder-cont in space and 
-they therefore have nontrivial quadratic- and quartic variations in time and space respectively.
-The \Theta schemes don't always give correct limiting values.
-This is interesting when we want to look at inference tools for the drift param. \alpha in (1)
+W is white noise as done by Walsh. 
 
+Simulations based on covariance as well as finite diff schemes. Focus is convergence of variations.
 See:
 Chong, Y., Walsh, J.B. The Roughness and Smoothness of Numerical Solutions to the Stochastic Heat Equation. Potential Anal 37, 303–332 (2012). https://doi.org/10.1007/s11118-011-9257-6 https://personal.math.ubc.ca/~walsh/yuxiang.pdf
 Estimation of the drift parameter for the fractional stochastic heat equation via power variation
