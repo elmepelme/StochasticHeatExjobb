@@ -6,11 +6,11 @@
 %%%%%%% Defining step sizes and matrices %%%%%%
 clc
 clear all
-drift = 2;
-sigma = 2;
+drift = exp(1);
+sigma = pi;
 
-M = 500; % Time points
-N = 499;  % Inner Space points, N + 2 points including boundary
+M = 1000; % Time points
+N = 999;  % Inner Space points, N + 2 points including boundary
 
 x_L = 0;
 x_R = 1;
@@ -63,13 +63,13 @@ for m = 1:M-1
     sum = sum + (u_time(m + 1) - u_time(m))^4;
 end
 quartic_variation = sum;
-drift_est_time = sigma^4 * abs_moment(4, sigma) * T / (pi * quartic_variation)
+drift_est_time = sigma^4 * abs_moment(4, 1) * T / (pi * quartic_variation)
 sum = 0;
 for j = 1:N
     sum = sum + (u_x(j + 1) - u_x(j)).^2;
 end
 quadratic_variation = sum;
-drift_est_space = sigma^2 * abs_moment(2, sigma) * (x_R - x_L) / (2 * quadratic_variation)
+drift_est_space = sigma^2 * abs_moment(2, 1) * (x_R - x_L) / (2 * quadratic_variation)
 
 q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
 q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th / sqrt(1+4.*c.*th)).^2;
@@ -86,8 +86,8 @@ real_quartic_sim
 
 % Variations
 
-V4 = sigma^4 * abs_moment(4, sigma) * T/(drift * pi)
-V2 = sigma^2 * abs_moment(2, sigma) * (x_R - x_L) / (2 * drift)
+V4 = sigma^4 * abs_moment(4, 1) * T/(drift * pi)
+V2 = sigma^2 * abs_moment(2, 1) * (x_R - x_L) / (2 * drift)
 %%
 
 %% Plots
