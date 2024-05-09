@@ -1,0 +1,117 @@
+%% Simulating SHE on [x_L,x_R]
+% u_t - drift * u_xx = \dot{F}
+% u(x_L,t) = u(x_R,t) = 0
+% u(x,0) = u_0(x)
+
+%%%%%%% Defining step sizes and matrices %%%%%%
+clc
+clear all
+drift = 2;
+sigma = 2;
+
+M = 500; % Time points
+N = 499;  % Inner Space points, N + 2 points including boundary
+
+x_L = 0;
+x_R = 1;
+
+c = 1/(pi - 2); % CFL Number c = drift * dt / (dx^2)
+dx = (x_R - x_L) / (N + 1);
+dt = c/drift * (dx^2); 
+T = M * dt; % Stopping time is not decided by us, still sol. is self similar
+
+x_points = linspace(x_L, x_R, N + 2);
+t_points = linspace(0, T, M);
+
+%%%%% Initial Conditions %%%%%%%
+u0 = @(x) 10*(x_L-x).*(x_R-x);
+%u0 = @(x) 0.1*sin(2*pi*x/(x_R-x_L));
+%U_White_Noise(1, :) = u0(x_points);
+
+
+% Solving the systems using one-step \Theta finite differences
+Theta = 0.5; % Finite-Diff theta
+%%%%%%%% Init. Noise Field %%%%%%%%%%%
+
+Z = normrnd(zeros(M, N), 1);
+
+%%%%% White Noise
+W = sigma * sqrt(dt*dx) * Z;
+U_White_Noise = zeros(M, N + 2);
+
+r_1 = drift * dt * Theta /(dx^2);
+r_2 = drift * dt * (1 - Theta) / (dx^2);
+
+A = diag(2*ones(1,N)) + diag(-1*ones(1,N-1),1) + ... 
+    diag(-1*ones(1,N-1),-1);
+
+for m = 1:M-1
+    m
+    b = (eye(N)-r_2*A)*U_White_Noise(m, 2:end - 1)' + W(m,:)'/(dx);
+    %b_White_Noise = A2*U_White_Noise(m, 2:end-1) + W(m,:)/(dx);    
+    U_White_Noise(m + 1, 2:end-1) = ((eye(N) + r_1*A)\b)';
+end
+
+u_t = U_White_Noise(:, round((N + 2)/2));
+u_x = U_White_Noise(M, :);
+% Variations for White Noise Sol.
+abs_moment = @(v, s) s^v * 2^(v/2) * gamma(v/2 + 1/2) / sqrt(pi); %% E( \vert Z \vert^v ), Z \in N(0,\sigma^2)
+sum = 0;
+
+u_time = u_t;
+for m = 1:M-1
+    sum = sum + (u_time(m + 1) - u_time(m))^4;
+end
+quartic_variation = sum;
+drift_est_time = sigma^4 * abs_moment(4, sigma) * T / (pi * quartic_variation)
+sum = 0;
+for j = 1:N
+    sum = sum + (u_x(j + 1) - u_x(j)).^2;
+end
+quadratic_variation = sum;
+drift_est_space = sigma^2 * abs_moment(2, sigma) * (x_R - x_L) / (2 * quadratic_variation)
+
+q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
+q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th / sqrt(1+4.*c.*th)).^2;
+real_quadratic_sim_01 = q2(c, Theta);
+real_quadratic_sim = q2(c, Theta)*(x_R-x_L)/(drift) * sigma^2; % Notera ändring med sigma
+real_quartic_sim = q4(c, Theta, T);
+real_quartic_sim = q4(c, Theta, T)/(drift) * sigma^4; % Notera ändring med sigma
+
+%%
+quadratic_variation
+real_quadratic_sim
+quartic_variation 
+real_quartic_sim
+
+% Variations
+
+V4 = sigma^4 * abs_moment(4, sigma) * T/(drift * pi)
+V2 = sigma^2 * abs_moment(2, sigma) * (x_R - x_L) / (2 * drift)
+%%
+
+%% Plots
+close all
+
+figure;
+subplot(2, 1, 1);
+plot(t_points, u_t);
+xlabel('Time')
+title('$t \mapsto u(t,x)$','FontSize', 16, 'interpreter','latex')
+grid on;
+grid minor;
+box on;
+set(gca, 'FontSize', 20);
+set(gca, 'LineWidth', 1.5);
+
+subplot(2, 1, 2);
+plot(x_points, u_x);
+xlabel('Space')
+title('$x \mapsto u(t,x)$','FontSize', 16, 'interpreter','latex')
+
+sgtitle('$u(t,x)$ for $\alpha = \sigma = 1$', 'FontSize', 20, 'interpreter','latex');
+grid on;
+grid minor;
+box on;
+set(gca, 'FontSize', 20);
+set(gca, 'LineWidth', 1.5);
