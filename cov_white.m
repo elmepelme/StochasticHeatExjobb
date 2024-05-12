@@ -12,7 +12,7 @@ t = 1;
 
 r_t = @(t1,t2) diffusion^2/sqrt(4*pi*drift) * (sqrt(t1 + t2) - sqrt(abs(t1 - t2)));
 
-N = 3000;
+N = 10000;
 x_L = 0;
 x_R = 1;
 t_points = linspace(0, t, N);
@@ -43,6 +43,9 @@ for k = 1:K
     U_t(:, k) = R_t * z(2:end);
 end
 U_x = U_x(2:end, :); % första värdet är konstigt
+
+%
+
 
 %%
 close all
