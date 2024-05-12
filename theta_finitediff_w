@@ -6,11 +6,11 @@
 %%%%%%% Defining step sizes and matrices %%%%%%
 clc
 clear all
-drift = exp(1);
-sigma = pi;
+drift = pi;
+sigma = exp(1);
 
-M = 1000; % Time points
-N = 999;  % Inner Space points, N + 2 points including boundary
+M = 3000; % Time points
+N = 2999;  % Inner Space points, N + 2 points including boundary
 
 x_L = 0;
 x_R = 1;
@@ -63,13 +63,11 @@ for m = 1:M-1
     sum = sum + (u_time(m + 1) - u_time(m))^4;
 end
 quartic_variation = sum;
-drift_est_time = sigma^4 * abs_moment(4, 1) * T / (pi * quartic_variation)
 sum = 0;
 for j = 1:N
     sum = sum + (u_x(j + 1) - u_x(j)).^2;
 end
 quadratic_variation = sum;
-drift_est_space = sigma^2 * abs_moment(2, 1) * (x_R - x_L) / (2 * quadratic_variation)
 
 q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
 q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th / sqrt(1+4.*c.*th)).^2;
@@ -86,8 +84,25 @@ real_quartic_sim
 
 % Variations
 
-V4 = sigma^4 * abs_moment(4, 1) * T/(drift * pi)
-V2 = sigma^2 * abs_moment(2, 1) * (x_R - x_L) / (2 * drift)
+%V4 = sigma^4 * abs_moment(4, 1) * T/(drift * pi)
+%V2 = sigma^2 * abs_moment(2, 1) * (x_R - x_L) / (2 * drift)
+
+fprintf('drift time and space')
+drift_est_time = 3*sigma^4 * T ./ (pi * quartic_variation)
+drift_est_space = sigma^2 * (x_R - x_L) ./ (2 * quadratic_variation)
+
+fprintf('diffusion time and space')
+diffusion_est_time = ((pi * drift * quartic_variation) ./ (3 * T)).^(1/4)
+diffusion_est_space = (2*drift.*quadratic_variation ./ (x_R - x_L)).^(1/2)
+
+% joint est
+
+alpha_hat = quartic_variation * pi * abs_moment(2,1)^2*(x_R - x_L)^2 / ...
+    (4 * quadratic_variation^2*abs_moment(4,1) * T)
+
+sigma_sq_hat = quartic_variation * pi * abs_moment(2,1)*(x_R - x_L) / ...
+    (2 * quadratic_variation*abs_moment(4,1) * T);
+sigma_hat = sqrt(sigma_sq_hat)
 %%
 
 %% Plots
@@ -108,10 +123,24 @@ subplot(2, 1, 2);
 plot(x_points, u_x);
 xlabel('Space')
 title('$x \mapsto u(t,x)$','FontSize', 16, 'interpreter','latex')
+title_str = sprintf('$\\sigma u_{\\alpha}(t,x)$ for $\\alpha = %g$, $\\sigma = %g$', drift, sigma);
+sgtitle(title_str, 'FontSize', 30, 'interpreter','latex');
 
-sgtitle('$u(t,x)$ for $\alpha = \sigma = 1$', 'FontSize', 20, 'interpreter','latex');
 grid on;
 grid minor;
 box on;
 set(gca, 'FontSize', 20);
 set(gca, 'LineWidth', 1.5);
+
+%%
+close all
+h = surf(T - t_points, x_points, flipud(fliplr(U_White_Noise))');
+grid off;
+set(h, 'LineStyle', 'none');
+title('$u(t,x)$ Simulation', 'Interpreter', 'latex');
+xlabel('Time');
+ylabel('Space');
+%view(45, 45);
+box on;
+set(gca, 'FontSize', 20);
+set(gca, 'LineWidth', 2);
