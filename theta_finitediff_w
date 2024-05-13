@@ -9,8 +9,8 @@ clear all
 drift = pi;
 sigma = exp(1);
 
-M = 3000; % Time points
-N = 2999;  % Inner Space points, N + 2 points including boundary
+M = 500; % Time points
+N = 499;  % Inner Space points, N + 2 points including boundary
 
 x_L = 0;
 x_R = 1;
@@ -31,8 +31,10 @@ u0 = @(x) 10*(x_L-x).*(x_R-x);
 
 % Solving the systems using one-step \Theta finite differences
 Theta = 0.5; % Finite-Diff theta
-%%%%%%%% Init. Noise Field %%%%%%%%%%%
-
+%%%%%%%% Init. Noise Field and loop %%%%%%%%%%%
+K = 100;
+for k = 1:K
+    k
 Z = normrnd(zeros(M, N), 1);
 
 %%%%% White Noise
@@ -46,7 +48,6 @@ A = diag(2*ones(1,N)) + diag(-1*ones(1,N-1),1) + ...
     diag(-1*ones(1,N-1),-1);
 
 for m = 1:M-1
-    m
     b = (eye(N)-r_2*A)*U_White_Noise(m, 2:end - 1)' + W(m,:)'/(dx);
     %b_White_Noise = A2*U_White_Noise(m, 2:end-1) + W(m,:)/(dx);    
     U_White_Noise(m + 1, 2:end-1) = ((eye(N) + r_1*A)\b)';
@@ -62,12 +63,13 @@ u_time = u_t;
 for m = 1:M-1
     sum = sum + (u_time(m + 1) - u_time(m))^4;
 end
-quartic_variation = sum;
+quartic_variation(k) = sum;
 sum = 0;
 for j = 1:N
     sum = sum + (u_x(j + 1) - u_x(j)).^2;
 end
-quadratic_variation = sum;
+quadratic_variation(k) = sum;
+end
 
 q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
 q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th / sqrt(1+4.*c.*th)).^2;
@@ -77,10 +79,10 @@ real_quartic_sim = q4(c, Theta, T);
 real_quartic_sim = q4(c, Theta, T)/(drift) * sigma^4; % Notera ändring med sigma
 
 %%
-quadratic_variation
-real_quadratic_sim
-quartic_variation 
-real_quartic_sim
+%quadratic_variation
+%real_quadratic_sim
+%quartic_variation 
+%real_quartic_sim
 
 % Variations
 
@@ -92,19 +94,50 @@ drift_est_time = 3*sigma^4 * T ./ (pi * quartic_variation)
 drift_est_space = sigma^2 * (x_R - x_L) ./ (2 * quadratic_variation)
 
 fprintf('diffusion time and space')
-diffusion_est_time = ((pi * drift * quartic_variation) ./ (3 * T)).^(1/4)
+diffusion_est_time = ((pi * drift .* quartic_variation) ./ (3 * T)).^(1/4)
 diffusion_est_space = (2*drift.*quadratic_variation ./ (x_R - x_L)).^(1/2)
 
 % joint est
 
-alpha_hat = quartic_variation * pi * abs_moment(2,1)^2*(x_R - x_L)^2 / ...
-    (4 * quadratic_variation^2*abs_moment(4,1) * T)
+alpha_hat = quartic_variation .* pi * abs_moment(2,1)^2*(x_R - x_L)^2 ./ ...
+    (4 * quadratic_variation.^2*abs_moment(4,1) * T)
 
-sigma_sq_hat = quartic_variation * pi * abs_moment(2,1)*(x_R - x_L) / ...
+sigma_sq_hat = quartic_variation .* pi * abs_moment(2,1)*(x_R - x_L) ./ ...
     (2 * quadratic_variation*abs_moment(4,1) * T);
 sigma_hat = sqrt(sigma_sq_hat)
-%%
 
+mean(alpha_hat)
+mean(sigma_hat)
+%%
+close all
+figure
+num_bins = sqrt(K);
+subplot(1, 2, 1);
+histogram(alpha_hat, num_bins, 'Normalization', 'pdf');
+hold on
+x = linspace(min(alpha_hat), max(alpha_hat), 10000);
+pdf_normal = normpdf(x, mean(alpha_hat), std(alpha_hat));
+plot(x, pdf_normal, 'r', 'LineWidth', 2);
+title('Drift Estimate - Time', 'FontSize', 14);
+xlabel('Value', 'FontSize', 12);
+ylabel('Frequency', 'FontSize', 12);
+legend('Histogram', 'Normal Distribution')
+
+subplot(1, 2, 2);
+histogram(sigma_hat, num_bins, 'Normalization', 'pdf');
+hold on
+x = linspace(min(sigma_hat), max(sigma_hat), 10000);
+pdf_normal = normpdf(x, mean(sigma_hat), std(sigma_hat));
+plot(x, pdf_normal, 'r', 'LineWidth', 2);
+title('Drift Estimate - Time', 'FontSize', 14);
+xlabel('Value', 'FontSize', 12);
+ylabel('Frequency', 'FontSize', 12);
+legend('Histogram', 'Normal Distribution')
+
+sgtitle(sprintf(['Normality Illustration for' ...
+    ' Estimates\nDrift: $\\alpha$ = %.2f, Diffusion: ' ...
+    '$\\sigma$ = %.2f'], drift, sigma), 'FontSize', 30, ...
+    'Interpreter', 'latex');
 %% Plots
 close all
 
