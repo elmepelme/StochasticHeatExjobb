@@ -1,4 +1,4 @@
-%% Simulating SHE on [x_L,x_R] (White Noise)
+%% Simulating SHE on [x_L,x_R] (White Noise) Working!
 % u_t - drift * u_xx = diffusion * \dot{W} 
 % u(t, x_L) = u(t,x_R) = 0
 % u(0,x) = u_0(x)
