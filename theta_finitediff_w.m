@@ -2,15 +2,15 @@
 % u_t - drift * u_xx = diffusion * \dot{W} 
 % u(t, x_L) = u(t,x_R) = 0
 % u(0,x) = u_0(x)
-
+clear all
 %%%%%%% Defining step sizes and matrices %%%%%%
 drift = 1;
 diffusion = 1;
 
 abs_moment = @(v)  2^(v/2) * gamma(v/2 + 1/2) / sqrt(pi); %% E( \vert Z \vert^v ), Z \in N(0,1)
 
-M = 1000; % Time points
-N = 999;  % Inner Space points, N + 2 points including boundary
+M = 160; % Time points
+N = 50;  % Inner Space points, N + 2 points including boundary
 
 x_L = 0;
 x_R = 1;
@@ -19,13 +19,16 @@ c = 1/(pi - 2); % CFL Number c = drift * dt / (dx^2)
 dx = (x_R - x_L) / (N + 1);
 dt = c/drift * (dx^2); 
 T = M * dt; % Stopping time is not decided by us, still sol. is self similar
-
+T = 0.05;
+dt = T/M;
+drift * dt / (dx^2)
+%
 x_points = linspace(x_L, x_R, N + 2);
 t_points = linspace(0, T, M);
 
 %%%%% Initial Conditions %%%%%%%
-u0 = @(x) 10*(x_L-x).*(x_R-x);
-%U_White_Noise(1, :) = u0(x_points);
+u0 = @(x) sin(2*pi*x / (x_R - x_L));
+U_White_Noise(1, :) = u0(x_points);
 
 % Solving the systems using one-step \Theta finite differences
 Theta = [0.5]; % Finite-Diff theta
@@ -41,6 +44,7 @@ for k = 1:K
     %%%%% White Noise
     W = diffusion * sqrt(dt*dx) * Z;
     U_White_Noise = zeros(M, N + 2, length(Theta));
+    U_White_Noise(1, :, :) = u0(x_points);
     for l = 1:length(Theta) % For each choice of theta
 
         r_1 = drift * dt * Theta(l) /(dx^2);
@@ -75,6 +79,29 @@ for k = 1:K
     quadratic_variations(l,k) = sum_2;
     end
 end
+%
+close all
+figure('units','normalized','outerposition',[0 0 1 1])
+h = surf(x_points, t_points, U_White_Noise(:,:,1));
+%grid off;
+%set(h, 'LineStyle', 'none');
+grid on
+set(h, 'LineStyle', '-')
+colormap(spring);
+title('Temperature Distribution $u(t,x)$', 'Interpreter', 'latex', 'FontSize', 24, 'FontWeight', 'bold');
+xlabel('Space', 'FontSize', 20, 'FontWeight', 'bold');
+ylabel('Time', 'FontSize', 20, 'FontWeight', 'bold');
+zlabel('Temperature', 'FontSize', 20, 'FontWeight', 'bold');
+view(35, 20);
+set(gca, 'FontSize', 20, 'LineWidth', 2, 'Box', 'on', 'TickDir', 'out');
+ax = gca;
+ax.XColor = 'black';
+ax.YColor = 'black';
+ax.ZColor = 'black';
+lighting phong;
+%shading interp;
+%light('Position', [1, 1, 1], 'Style', 'infinite');
+set(gcf, 'Color', 'w');
 %%
 % Estimations
 abs_moment = @(v)  2^(v/2) * gamma(v/2 + 1/2) / sqrt(pi); %% E( \vert Z \vert^v ), Z \in N(0,1)
@@ -163,7 +190,7 @@ set(gca, 'LineWidth', 1.5);
 
 %%
 close all
-h = surf(T - t_points, x_points, flipud(fliplr(U_White_Noise(:,:,2)))');
+h = surf(T - t_points, x_points, flipud(fliplr(U_White_Noise(:,:,1)))');
 grid off;
 set(h, 'LineStyle', 'none');
 title('$u(t,x)$ Simulation', 'Interpreter', 'latex');
