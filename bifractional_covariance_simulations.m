@@ -25,8 +25,18 @@ U = R*Z;
 %
 abs_moment = @(v) 2^(v/2) * gamma(v/2 + 1/2) / sqrt(pi); 
 close all
+close all
 figure
-plot(U(:, randi(J)))
+plot(t_points, U(:, randi(J)), 'LineWidth', 1, 'Color', [0 0.4470 0.7410]);
+title('Sample Path of a bi-Fractional Brownian Motion $B^{H,K}$', 'Interpreter', 'latex', 'FontSize', 24, 'FontWeight', 'bold');
+xlabel('Time t', 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter', 'latex');
+ylabel('$F^H(t)$', 'FontSize', 20, 'FontWeight', 'bold', 'Interpreter', 'latex');
+grid on;
+set(gca, 'FontSize', 20, 'LineWidth', 2, 'Box', 'on', 'TickDir', 'out');
+ax = gca;
+ax.XColor = 'black';
+ax.YColor = 'black';
+set(gcf, 'Color', 'w');
 q = 1/(H*K);
 q_variation = mean(sum(abs(diff(U)).^q))
 exact_q_variaton = sqrt(2^(1-K))^(1/(H*K))*(t-epsilon) * abs_moment(1/(H*K))
