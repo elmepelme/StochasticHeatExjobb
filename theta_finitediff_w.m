@@ -3,14 +3,15 @@
 % u(t, x_L) = u(t,x_R) = 0
 % u(0,x) = u_0(x)
 clear all
+clc
 %%%%%%% Defining step sizes and matrices %%%%%%
 drift = 1;
 diffusion = 1;
 
 abs_moment = @(v)  2^(v/2) * gamma(v/2 + 1/2) / sqrt(pi); %% E( \vert Z \vert^v ), Z \in N(0,1)
 
-M = 160; % Time points
-N = 50;  % Inner Space points, N + 2 points including boundary
+M = 1000; % Time points
+N = 999;  % Inner Space points, N + 2 points including boundary
 
 x_L = 0;
 x_R = 1;
@@ -19,32 +20,32 @@ c = 1/(pi - 2); % CFL Number c = drift * dt / (dx^2)
 dx = (x_R - x_L) / (N + 1);
 dt = c/drift * (dx^2); 
 T = M * dt; % Stopping time is not decided by us, still sol. is self similar
-T = 0.05;
-dt = T/M;
-drift * dt / (dx^2)
+%T = 0.05;
+%dt = T/M;
+%drift * dt / (dx^2)
 %
 x_points = linspace(x_L, x_R, N + 2);
 t_points = linspace(0, T, M);
 
 %%%%% Initial Conditions %%%%%%%
-u0 = @(x) sin(2*pi*x / (x_R - x_L));
-U_White_Noise(1, :) = u0(x_points);
+%u0 = @(x) sin(2*pi*x / (x_R - x_L));
+%U_White_Noise(1, :) = u0(x_points);
 
 % Solving the systems using one-step \Theta finite differences
-Theta = [0.5]; % Finite-Diff theta
+Theta = [1]; % Finite-Diff theta
 %%%%%%%% Init. Noise Field %%%%%%%%%%%
-K = 1; % How many fields
+K = 1000; % How many fields
 quartic_variations = zeros(length(Theta),K);
 quadratic_variations = zeros(length(Theta),K);
 
 for k = 1:K
-    k
+    disp("Itter: "+ num2str(k))
     Z = normrnd(zeros(M, N), 1);
 
     %%%%% White Noise
     W = diffusion * sqrt(dt*dx) * Z;
     U_White_Noise = zeros(M, N + 2, length(Theta));
-    U_White_Noise(1, :, :) = u0(x_points);
+    %U_White_Noise(1, :, :) = u0(x_points);
     for l = 1:length(Theta) % For each choice of theta
 
         r_1 = drift * dt * Theta(l) /(dx^2);
@@ -86,7 +87,7 @@ h = surf(x_points, t_points, U_White_Noise(:,:,1));
 %grid off;
 %set(h, 'LineStyle', 'none');
 grid on
-set(h, 'LineStyle', '-')
+set(h, 'LineStyle', 'none')
 colormap(spring);
 title('Temperature Distribution $u(t,x)$', 'Interpreter', 'latex', 'FontSize', 24, 'FontWeight', 'bold');
 xlabel('Space', 'FontSize', 20, 'FontWeight', 'bold');
@@ -122,41 +123,65 @@ sigma_sq_hat = quartic_variations * pi * abs_moment(2)*(x_R - x_L) ./ ...
     (2 * quadratic_variations*abs_moment(4) * T);
 sigma_hat = sqrt(sigma_sq_hat);
 %
+%%
+clc
+fprintf('Mean of drift_est_time: %.4f\n', mean(drift_est_time));
+fprintf('Mean of drift_est_space: %.4f\n', mean(drift_est_space));
+fprintf('Mean of diffusion_est_time: %.4f\n', mean(diffusion_est_time));
+fprintf('Mean of diffusion_est_space: %.4f\n', mean(diffusion_est_space));
+
 rho2_term = @(H, q, z) factorial(q)/(2^q) * (abs(z + 1)^(2*H) + abs(z-1)^(2*H) - 2*abs(z)^(2*H))^q;
-D = 100;
+D = 1000;
 sum1 = 0;
 sum2 = 0;
 for z = -D:D
     sum1 = sum1 + rho2_term(1/4,4,z);
     sum2 = sum2 + rho2_term(1/2,2,z);
 end
-
-% Dessa fel. Ska vara enl. "A note on parameter est..."
 rho2_4 = sum1;
-rho2_2 = sum2;%rho2_term(1/2, 2,0); 
-
+rho2_2 = sum2;%rho2_term(1/2, 2,0);
 %
-s2_4 = rho2_4 * drift^(2) * abs_moment(4)^(-2) / (N); % Real variance drift
+
+s2_4 = rho2_4 * drift^(2) * abs_moment(4)^(-2) / (M); % Real variance drift
 s2_4_est = std(drift_est_time)^2 ;% Estimated variance drift
 s2_2 = rho2_2 * drift^2 * abs_moment(2)^(-2) / N ;% Real variance drift
 s2_2_est = std(drift_est_space)^2 ;% Estimated variance drift
 
-s2_diff_4 = rho2_4 / (16) * diffusion^2 * abs_moment(4)^(-2) / (N); % Real variance diffusion
+s2_diff_4 = rho2_4 / (16) * diffusion^2 * abs_moment(4)^(-2) / (M); % Real variance diffusion
 s2_diff_4_est = std(diffusion_est_time)^2; % estimated variance diffusion
 s2_diff_2 = rho2_2 / (4) * diffusion^2 * abs_moment(2)^(-2) / (N); % Real variance diffusion  
 s2_diff_2_est = std(diffusion_est_space)^2; % Estimated variance diffusion
 
-fprintf('Real variance drift for time (s2_4): %.4f\n', s2_4);
-fprintf('Estimated variance drift for time (s2_4_est): %.4f\n', s2_4_est);
-fprintf('Real variance drift for space (s2_2): %.4f\n', s2_2);
-fprintf('Estimated variance drift for space (s2_2_est): %.4f\n', s2_2_est);
-fprintf('Real variance diffusion for time (s2_diff_4): %.4f\n', s2_diff_4);
-fprintf('Estimated variance diffusion for time (s2_diff_4_est): %.4f\n', s2_diff_4_est);
-fprintf('Real variance diffusion for space (s2_diff_2): %.4f\n', s2_diff_2);
-fprintf('Estimated variance diffusion for space (s2_diff_2_est): %.4f\n', s2_diff_2_est);
+
+sig_2 = 0;
+sig_4 = 0;
+sig_2_space = 0;
+sig_4_space = 0;
+D = 1000;
+r_l = @(k, H) 1/2 * (abs(k + 1)^(2*H) + abs(k - 1)^(2*H) - 2*abs(k)^(2*H));
+for i = 1:D
+    for j = 1:D
+        sig_2 = sig_2 + r_l(abs(i-j), 1/4)^2;
+        sig_4 = sig_4 + r_l(abs(i-j), 1/4)^4;
+        sig_2_space = sig_2_space + r_l(abs(i-j), 1/2)^2;
+        sig_4_space = sig_4_space + r_l(abs(i-j), 1/2)^4;
+    end
+end
+sig = (72*sig_2 + 24*sig_4)/D;
+sig_space = (2*sig_2_space)/D;
+
+s2_diff_4 = sig / (16) * diffusion^2 * abs_moment(4)^(-2) / (N);
+s2_4 = sig * drift^(2) * abs_moment(4)^(-2) / (N); % Real variance drift
+fprintf('Drift - time Real Variance (s2_4): %.4f\n', s2_4);
+fprintf('Drift - time Estimated variance (s2_4_est): %.4f\n', s2_4_est);
+fprintf('Drift - space Real Variance (s2_2): %.4f\n', s2_2);
+fprintf('Drift - space Estimated Variance (s2_2_est): %.4f\n', s2_2_est);
+fprintf('Diffusion - time Real variance (s2_diff_4): %.4f\n', s2_diff_4);
+fprintf('Diffusion - time Estimated variance (s2_diff_4_est): %.4f\n', s2_diff_4_est);
+fprintf('Diffusion - space Real variance (s2_diff_2): %.4f\n', s2_diff_2);
+fprintf('Diffusion - space Estimated variance (s2_diff_2_est): %.4f\n', s2_diff_2_est);
 s2_4_est/s2_4
 s2_diff_4_est/s2_diff_4
-%
 
 %%
 
@@ -247,6 +272,6 @@ legend('$\Theta = 0.25$', '$\Theta = 0.5$', '$\Theta = 1$','FontSize', 16, 'inte
 q2 = @(c, th) 0.5 ./ (sqrt(1+2*c*(2*th - 1)));
 q4 = @(c, th, time) 3.*c.*time.*( (1-2.*th) ./ (sqrt(1+2*c*(2.*th - 1))) + 2.*th ./ sqrt(1+4.*c.*th)).^2;
 real_quadratic_sim_01 = q2(c, Theta);
-real_quadratic_sim = q2(c, Theta)*(x_R-x_L)/(drift) * diffusion^2; % Notera ändring med sigma
+real_quadratic_sim = q2(c, Theta)*(x_R-x_L)/(drift) * diffusion^2 % Notera ändring med sigma
 real_quartic_sim = q4(c, Theta, T);
-real_quartic_sim = q4(c, Theta, T)/(drift) * diffusion^4; % Notera ändring med sigma
+real_quartic_sim = q4(c, Theta, T)/(drift) * diffusion^4 % Notera ändring med sigma
